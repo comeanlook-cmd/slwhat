@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110" role="img" aria-label="Soori Washing logo">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#0b3b66"/><stop offset="1" stop-color="#0aa6a6"/></linearGradient></defs>
+  <rect width="420" height="110" rx="24" fill="#f5fbff"/>
+  <circle cx="58" cy="55" r="36" fill="url(#g)"/>
+  <path d="M39 55c9-13 29-13 38 0-9 13-29 13-38 0Z" fill="#fff" opacity=".95"/>
+  <circle cx="58" cy="55" r="8" fill="#0aa6a6"/>
+  <text x="108" y="51" font-family="Arial,sans-serif" font-size="32" font-weight="800" fill="#0b3b66">SOORI</text>
+  <text x="108" y="80" font-family="Arial,sans-serif" font-size="21" font-weight="700" letter-spacing="3" fill="#0aa6a6">WASHING</text>
+</svg>

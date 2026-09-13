@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order Online | Soori Washing</title>
+<link rel="stylesheet" href="/css/style.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+</head>
+<body>
+<header class="nav"><div class="container navin">
+<a class="brand" href="/"><img src="/assets/logo.svg" alt="Soori Washing"></a>
+<nav class="links"><a href="/">Home</a><a href="/services.html">Services</a><a href="/order.html">Order</a><a href="/track.html">Track Order</a><a href="/contact.html">Contact</a><a class="btn primary" href="/admin.html">Admin</a></nav>
+</div></header>
+<main><section class="section"><div class="container">
+<h1>Place an Order</h1>
+<p class="muted">Online orders are saved as <b>Pending</b>. After placing the order, confirm it with Soori Washing on WhatsApp. Staff will then approve the order.</p>
+<div class="grid2">
+<form id="order-form" class="card">
+<div class="form-grid">
+<div class="field"><label>Name *</label><input name="customerName" required maxlength="120"></div>
+<div class="field"><label>WhatsApp / Phone *</label><input name="phone" placeholder="0777400300 or +94..." required maxlength="50"></div>
+<div class="field full"><label>Address</label><textarea name="address" maxlength="500"></textarea></div>
+<div class="field"><label>Pickup date</label><input type="date" name="pickupDate"></div>
+<div class="field"><label>Pickup time</label><input type="time" name="pickupTime"></div>
+<div class="field"><label>Preferred return date</label><input type="date" name="deliveryDate"></div>
+<div class="field"><label>Payment</label><select name="paymentMethod"><option>Pay at shop</option><option>Cash on delivery</option><option>Bank transfer</option></select></div>
+<div class="field full"><label>Notes</label><textarea name="notes" maxlength="1000"></textarea></div>
+
+<div class="field full">
+<label>Security verification *</label>
+<div id="turnstile-box"><p class="muted">Loading CAPTCHA…</p></div>
+<p id="captcha-message" class="muted"></p>
+</div>
+
+<div class="field full"><button id="place-order-btn" class="btn primary">Place Order</button></div>
+</div>
+</form>
+
+<div class="card">
+<h3>Select Services</h3>
+<div id="order-items"><p>Loading current prices…</p></div>
+<div class="total"><span>Estimated total</span><span id="order-total">LKR 0</span></div>
+<p class="muted">Prices come directly from the Soori Washing PostgreSQL database. The server recalculates the final total securely.</p>
+</div>
+</div>
+
+<div id="done" class="card hidden" style="margin-top:20px">
+<h2>Order saved as Pending ⏳</h2>
+<div class="notice" style="margin-bottom:18px">
+<b>One more step:</b> Press <b>Confirm Order on WhatsApp</b> and send the prepared message to Soori Washing. Your order remains Pending until staff verifies the message and approves it.
+</div>
+<div class="grid2">
+<div>
+<p><b>Customer:</b> <span id="confirmed-name"></span></p>
+<p><b>Order number:</b></p><div class="order-id" id="new-id"></div>
+<p><b>Order date/time:</b> <span id="confirmed-date"></span></p>
+<p><b>Preferred return:</b> <span id="confirmed-return"></span></p>
+<p><b>Total:</b> <span id="confirmed-total"></span></p>
+<p><b>Status:</b> <span class="badge" id="confirmed-status">Pending</span></p>
+<p>
+<a id="whatsapp-confirm" class="btn primary hidden" target="_blank" rel="noopener">Confirm Order on WhatsApp</a>
+<a id="track-new" class="btn dark">Track Order</a>
+</p>
+<p class="muted">WhatsApp opens a prepared message to Soori Washing at +94 777400300. Please press Send in WhatsApp. Staff will manually verify it and approve the order.</p>
+</div>
+<div style="text-align:center">
+<h3>Order QR Code</h3>
+<img id="qr-image" alt="Order QR code" style="max-width:300px;width:100%;border:1px solid #dce7ef;border-radius:14px">
+<p><a id="qr-download" class="btn" href="#">Save QR Image</a></p>
+<p class="muted">The QR contains order details, total, Pending status and the tracking link.</p>
+</div>
+</div>
+</div>
+</div></section></main>
+
+<footer class="footer"><div class="container"><b>Soori Washing</b><p>+94 777400300 • Kadawatha, Sri Lanka</p><p>Washing • Dry Cleaning • Ironing • Wedding Suits • Bedding</p></div></footer>
+<script src="/js/app.js"></script>
+</body></html>

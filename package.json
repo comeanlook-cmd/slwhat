@@ -1,0 +1,15 @@
+{
+  "name": "soori-washing-v3",
+  "version": "6.0.0",
+  "private": true,
+  "description": "Soori Washing: PostgreSQL pricing, Cloudflare Turnstile CAPTCHA, pending WhatsApp confirmation and admin approval",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "qrcode": "^1.5.4"
+  }
+}

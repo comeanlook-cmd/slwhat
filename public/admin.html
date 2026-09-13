@@ -1,0 +1,113 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard | Soori Washing</title><link rel="stylesheet" href="/css/style.css"></head><body>
+<header class="nav"><div class="container navin"><a class="brand" href="/"><img src="/assets/logo.svg" alt="Soori Washing"></a><button class="btn dark" id="logout">Log Out</button></div></header>
+<main>
+<section class="section alt"><div class="container">
+<h1>Admin Dashboard</h1>
+<p><button class="btn primary" onclick="loadAll()">Refresh</button> <a class="btn dark" href="/api/admin/export.csv">Export Orders CSV</a></p>
+<div class="stats">
+<div class="stat"><strong id="sPending">0</strong>Pending approval</div>
+<div class="stat"><strong id="s1">0</strong>Total orders</div>
+<div class="stat"><strong id="s2">0</strong>Active</div>
+<div class="stat"><strong id="s4">LKR 0</strong>Recorded value</div>
+</div>
+</div></section>
+
+<section class="section"><div class="container">
+<h2>Service Price Management</h2>
+<p class="muted">Change prices here whenever needed. Saved prices are stored in PostgreSQL and immediately used for new orders.</p>
+<div class="table-wrap"><table class="table"><thead><tr><th>Service</th><th>Unit</th><th>Price (LKR)</th><th>Active</th><th>Last updated</th><th>Action</th></tr></thead><tbody id="service-prices"></tbody></table></div>
+<p id="price-message"></p>
+</div></section>
+
+<section class="section alt"><div class="container">
+<h2>Orders</h2>
+<p class="muted"><b>Pending</b> orders have passed CAPTCHA but still require customer WhatsApp confirmation and your approval. Verify the WhatsApp message, then press <b>Approve</b>.</p>
+<div class="table-wrap"><table class="table">
+<thead><tr><th>Order</th><th>Customer</th><th>Services</th><th>Total</th><th>WhatsApp</th><th>Status</th><th>Approval / Action</th></tr></thead>
+<tbody id="orders"></tbody>
+</table></div>
+</div></section>
+</main>
+<script>
+const money=n=>"LKR "+Number(n||0).toLocaleString("en-LK",{maximumFractionDigits:2});
+const statuses=["Pending","Received","Picked Up","Washing","Dry Cleaning","Ironing","Quality Check","Ready","Out for Delivery","Delivered","Cancelled"];
+const esc=s=>String(s??"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+async function loadServices(){
+ const r=await fetch("/api/admin/services");if(r.status===401){location.href="/admin-login.html";return}
+ const all=await r.json();
+ document.getElementById("service-prices").innerHTML=all.map(s=>`<tr>
+  <td><input id="name-${s.id}" value="${esc(s.name)}" style="min-width:220px"></td>
+  <td><input id="unit-${s.id}" value="${esc(s.unit)}" style="width:100px"></td>
+  <td><input id="price-${s.id}" type="number" min="0" step="0.01" value="${Number(s.price)}" style="width:130px"></td>
+  <td><input id="active-${s.id}" type="checkbox" ${s.active?"checked":""}></td>
+  <td class="muted">${s.updated_at?new Date(s.updated_at).toLocaleString():"—"}</td>
+  <td><button class="btn primary" onclick="saveService('${s.id}')">Save</button></td>
+ </tr>`).join("");
+}
+async function saveService(id){
+ const payload={name:document.getElementById("name-"+id).value,unit:document.getElementById("unit-"+id).value,price:Number(document.getElementById("price-"+id).value),active:document.getElementById("active-"+id).checked};
+ const r=await fetch("/api/admin/services/"+encodeURIComponent(id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+ if(r.status===401){location.href="/admin-login.html";return}
+ const d=await r.json(),m=document.getElementById("price-message");
+ if(!r.ok){m.innerHTML=`<b style="color:#b91c1c">${esc(d.error||"Could not save price")}</b>`;return}
+ m.innerHTML=`<b style="color:#16835b">Saved: ${esc(d.name)} — ${money(d.price)} / ${esc(d.unit)}</b>`;
+ loadServices();
+}
+async function loadOrders(){
+ const r=await fetch("/api/admin/orders");if(r.status===401){location.href="/admin-login.html";return}
+ const all=await r.json();
+ sPending.textContent=all.filter(o=>o.status==="Pending").length;
+ s1.textContent=all.length;
+ s2.textContent=all.filter(o=>!["Pending","Delivered","Cancelled"].includes(o.status)).length;
+ s4.textContent=money(all.filter(o=>o.status!=="Cancelled").reduce((a,o)=>a+Number(o.total||0),0));
+
+ orders.innerHTML=all.map(o=>{
+   const pending=o.status==="Pending";
+   const wa=o.whatsappConfirmationClickedAt
+     ? `<b style="color:#16835b">Button clicked</b><div class="muted">${new Date(o.whatsappConfirmationClickedAt).toLocaleString()}</div>`
+     : `<span class="muted">Not clicked yet</span>`;
+   const approval=pending
+     ? `<button class="btn primary" onclick="approveOrder('${o.id}')">Approve</button> <button class="btn" onclick="deleteOrder('${o.id}')">Delete</button>`
+     : `<div class="muted">${o.approvedAt?"Approved "+new Date(o.approvedAt).toLocaleString():"—"}</div><button class="btn" onclick="deleteOrder('${o.id}')">Delete</button>`;
+   return `<tr class="${pending?"pending-row":""}">
+     <td><b>${esc(o.id)}</b><div class="muted">${new Date(o.createdAt).toLocaleString()}</div></td>
+     <td>${esc(o.customerName)}<div class="muted">${esc(o.phone)}</div></td>
+     <td>${(o.items||[]).map(x=>`${esc(x.service)} × ${x.qty}<div class="muted">${money(x.unitPrice??0)} each</div>`).join("")}</td>
+     <td>${money(o.total)}</td>
+     <td>${wa}</td>
+     <td><select onchange="setStatus('${o.id}',this.value)">${statuses.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></td>
+     <td>${approval}</td>
+   </tr>`;
+ }).join("")||"<tr><td colspan='7'>No orders yet.</td></tr>";
+}
+async function approveOrder(id){
+ if(!confirm("Have you verified the customer's WhatsApp confirmation? Approve this order?"))return;
+ const r=await fetch("/api/admin/orders/"+encodeURIComponent(id)+"/approve",{method:"POST"});
+ if(r.status===401){location.href="/admin-login.html";return}
+ const d=await r.json();
+ if(!r.ok){alert(d.error||"Could not approve order.");return}
+ loadOrders();
+}
+async function setStatus(id,status){
+ const r=await fetch("/api/admin/orders/"+encodeURIComponent(id)+"/status",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status})});
+ if(r.status===401){location.href="/admin-login.html";return}
+ if(!r.ok)alert("Could not update status.");else loadOrders();
+}
+async function deleteOrder(id){
+ if(!confirm("Delete this order permanently?"))return;
+ const r=await fetch("/api/admin/orders/"+encodeURIComponent(id),{method:"DELETE"});
+ if(r.status===401){location.href="/admin-login.html";return}
+ if(!r.ok){alert("Could not delete order.");return}
+ loadOrders();
+}
+async function loadAll(){await Promise.all([loadServices(),loadOrders()])}
+logout.onclick=async()=>{await fetch("/api/admin/logout",{method:"POST"});location.href="/admin-login.html"};
+loadAll();
+</script>
+<style>
+.pending-row{background:#fff8e6}
+.notice{padding:14px;border:1px solid #e7d59e;border-radius:12px;background:#fff8e6}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#fff0c7;font-weight:700}
+</style>
+</body></html>
